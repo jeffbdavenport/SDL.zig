@@ -1,5 +1,5 @@
 id: r5hwws1i0u5g9xlcjjiylo1gl8ht7kdnse285jpjlzs61ms9
-name: SDL.zig
+name: sdl
 main: src/sdl.zig
 license: MIT
 description: SDL
