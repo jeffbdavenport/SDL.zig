@@ -15,7 +15,7 @@ const Sdk = @import("Sdk.zig"); // Import the Sdk at build time
 pub fn build(b: *std.Build.Builder) !void {
     // Determine compilation target
     const target = b.standardTargetOptions(.{});
-  
+
     // Create a new instance of the SDL2 Sdk
     const sdk = Sdk.init(b, null);
 
@@ -23,16 +23,15 @@ pub fn build(b: *std.Build.Builder) !void {
     const demo_basic = b.addExecutable(.{
         .name = "demo-basic",
         .root_source_file = .{ .path = "my-game.zig" },
+        .target = target,
     });
-    
-    demo_basic.setTarget(target);   // must be done before calling sdk.link
     sdk.link(demo_basic, .dynamic); // link SDL2 as a shared library
 
     // Add "sdl2" package that exposes the SDL2 api (like SDL_Init or SDL_CreateWindow)
-    demo_basic.addModule("sdl2", sdk.getNativeModule()); 
+    demo_basic.addModule("sdl2", sdk.getNativeModule());
 
     // Install the executable into the prefix when invoking "zig build"
-    demo_basic.install();
+    b.installArtifact(demo_basic);
 }
 ```
 
@@ -88,7 +87,7 @@ This package also exposes the SDL2 API with a more Zig-style API. Use this if yo
 
 ```zig
 const std = @import("std");
-const SDL = @import("sdl2"); // Add this package by using sdk.getWrapperPackage
+const SDL = @import("sdl2"); // Created in build.zig by using exe.addModule("sdl2", sdk.getWrapperModule());
 
 pub fn main() !void {
     try SDL.init(.{

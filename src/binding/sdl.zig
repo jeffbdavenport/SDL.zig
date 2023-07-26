@@ -1368,6 +1368,156 @@ pub extern fn SDL_SIMDGetAlignment() usize;
 pub extern fn SDL_SIMDAlloc(len: usize) ?*anyopaque;
 pub extern fn SDL_SIMDRealloc(mem: ?*anyopaque, len: usize) ?*anyopaque;
 pub extern fn SDL_SIMDFree(ptr: ?*anyopaque) void;
+
+const SDL_malloc_func = *const fn (size: usize) callconv(.C) ?*anyopaque;
+const SDL_calloc_func = *const fn (nmemb: usize, size: usize) callconv(.C) ?*anyopaque;
+const SDL_realloc_func = *const fn (mem: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
+const SDL_free_func = *const fn (mem: ?*anyopaque) callconv(.C) void;
+pub extern fn SDL_SetMemoryFunctions(
+    malloc_func: SDL_malloc_func,
+    calloc_func: SDL_calloc_func,
+    realloc_func: SDL_realloc_func,
+    free_func: SDL_free_func,
+) callconv(.C) void;
+
+pub const SDL_Point = extern struct {
+    x: c_int,
+    y: c_int,
+};
+pub const SDL_FPoint = extern struct {
+    x: f32,
+    y: f32,
+};
+pub const SDL_FRect = extern struct {
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+};
+
+pub fn SDL_PointInRect(arg_p: [*c]const SDL_Point, arg_r: [*c]const SDL_Rect) SDL_bool {
+    var p = arg_p;
+    var r = arg_r;
+    return if ((((p.*.x >= r.*.x) and (p.*.x < (r.*.x + r.*.w))) and (p.*.y >= r.*.y)) and (p.*.y < (r.*.y + r.*.h))) @as(c_int, 1) else @as(c_int, 0);
+}
+
+pub fn SDL_RectEmpty(arg_r: [*c]const SDL_Rect) SDL_bool {
+    var r = arg_r;
+    return if ((!(r != null) or (r.*.w <= @as(c_int, 0))) or (r.*.h <= @as(c_int, 0))) @as(c_int, 1) else @as(c_int, 0);
+}
+
+pub fn SDL_RectEquals(arg_a: [*c]const SDL_Rect, arg_b: [*c]const SDL_Rect) SDL_bool {
+    var a = arg_a;
+    var b = arg_b;
+    return if ((((((a != null) and (b != null)) and (a.*.x == b.*.x)) and (a.*.y == b.*.y)) and (a.*.w == b.*.w)) and (a.*.h == b.*.h)) @as(c_int, 1) else @as(c_int, 0);
+}
+pub extern fn SDL_HasIntersection(A: [*c]const SDL_Rect, B: [*c]const SDL_Rect) SDL_bool;
+pub extern fn SDL_HasIntersectionF(A: [*c]const SDL_FRect, B: [*c]const SDL_FRect) SDL_bool;
+pub extern fn SDL_IntersectRect(A: [*c]const SDL_Rect, B: [*c]const SDL_Rect, result: [*c]SDL_Rect) SDL_bool;
+pub extern fn SDL_IntersectFRect(A: [*c]const SDL_FRect, B: [*c]const SDL_FRect, result: [*c]SDL_FRect) SDL_bool;
+pub extern fn SDL_UnionRect(A: [*c]const SDL_Rect, B: [*c]const SDL_Rect, result: [*c]SDL_Rect) void;
+pub extern fn SDL_UnionFRect(A: [*c]const SDL_FRect, B: [*c]const SDL_FRect, result: [*c]SDL_FRect) void;
+pub extern fn SDL_EnclosePoints(points: [*c]const SDL_Point, count: c_int, clip: [*c]const SDL_Rect, result: [*c]SDL_Rect) SDL_bool;
+pub extern fn SDL_EncloseFPoints(points: [*c]const SDL_FPoint, count: c_int, clip: [*c]const SDL_FRect, result: [*c]SDL_FRect) SDL_bool;
+pub extern fn SDL_IntersectRectAndLine(rect: [*c]const SDL_Rect, X1: [*c]c_int, Y1: [*c]c_int, X2: [*c]c_int, Y2: [*c]c_int) SDL_bool;
+pub extern fn SDL_IntersectFRectAndLine(rect: [*c]const SDL_FRect, X1: [*c]f32, Y1: [*c]f32, X2: [*c]f32, Y2: [*c]f32) SDL_bool;
+pub const SDL_RWops = extern struct {
+    size: ?*const fn ([*c]SDL_RWops) callconv(.C) i64,
+    seek: ?*const fn ([*c]SDL_RWops, i64, c_int) callconv(.C) i64,
+    read: ?*const fn ([*c]SDL_RWops, ?*anyopaque, usize, usize) callconv(.C) usize,
+    write: ?*const fn ([*c]SDL_RWops, ?*const anyopaque, usize, usize) callconv(.C) usize,
+    close: ?*const fn ([*c]SDL_RWops) callconv(.C) c_int,
+
+    type: u32,
+    hidden: Data,
+
+    const Data = extern union {
+        mem: Memory,
+        unknown: Unknown,
+
+        pub const Memory = extern struct {
+            base: [*]u8,
+            here: [*]u8,
+            stop: [*]u8,
+        };
+        pub const Unknown = extern struct {
+            data1: ?*anyopaque,
+            data2: ?*anyopaque,
+        };
+
+        // #if defined(__ANDROID__)
+        //         struct
+        //         {
+        //             void *asset;
+        //         } androidio;
+        // #elif defined(__WIN32__)
+        //         struct
+        //         {
+        //             SDL_bool append;
+        //             void *h;
+        //             struct
+        //             {
+        //                 void *data;
+        //                 size_t size;
+        //                 size_t left;
+        //             } buffer;
+        //         } windowsio;
+        // #elif defined(__VITA__)
+        //         struct
+        //         {
+        //             int h;
+        //             struct
+        //             {
+        //                 void *data;
+        //                 size_t size;
+        //                 size_t left;
+        //             } buffer;
+        //         } vitaio;
+        // #endif
+        // #ifdef HAVE_STDIO_H
+        //         struct
+        //         {
+        //             SDL_bool autoclose;
+        //             FILE *fp;
+        //         } stdio;
+        // #endif
+    };
+};
+pub extern fn SDL_RWFromFile(file: [*c]const u8, mode: [*c]const u8) ?*SDL_RWops;
+pub extern fn SDL_RWFromFP(fp: ?*anyopaque, autoclose: SDL_bool) ?*SDL_RWops;
+pub extern fn SDL_RWFromMem(mem: ?*anyopaque, size: c_int) ?*SDL_RWops;
+pub extern fn SDL_RWFromConstMem(mem: ?*const anyopaque, size: c_int) ?*SDL_RWops;
+pub extern fn SDL_AllocRW() ?*SDL_RWops;
+pub extern fn SDL_FreeRW(area: *SDL_RWops) void;
+pub extern fn SDL_RWsize(context: *SDL_RWops) i64;
+pub extern fn SDL_RWseek(context: *SDL_RWops, offset: i64, whence: c_int) i64;
+pub extern fn SDL_RWtell(context: *SDL_RWops) i64;
+pub extern fn SDL_RWread(context: *SDL_RWops, ptr: ?*anyopaque, size: usize, maxnum: usize) usize;
+pub extern fn SDL_RWwrite(context: *SDL_RWops, ptr: ?*const anyopaque, size: usize, num: usize) usize;
+pub extern fn SDL_RWclose(context: *SDL_RWops) c_int;
+pub extern fn SDL_LoadFile_RW(src: *SDL_RWops, datasize: *usize, freesrc: c_int) ?*anyopaque;
+pub extern fn SDL_LoadFile(file: [*:0]const u8, datasize: *usize) ?*anyopaque;
+pub extern fn SDL_ReadU8(src: *SDL_RWops) u8;
+pub extern fn SDL_ReadLE16(src: *SDL_RWops) u16;
+pub extern fn SDL_ReadBE16(src: *SDL_RWops) u16;
+pub extern fn SDL_ReadLE32(src: *SDL_RWops) u32;
+pub extern fn SDL_ReadBE32(src: *SDL_RWops) u32;
+pub extern fn SDL_ReadLE64(src: *SDL_RWops) u64;
+pub extern fn SDL_ReadBE64(src: *SDL_RWops) u64;
+pub extern fn SDL_WriteU8(dst: *SDL_RWops, value: u8) usize;
+pub extern fn SDL_WriteLE16(dst: *SDL_RWops, value: u16) usize;
+pub extern fn SDL_WriteBE16(dst: *SDL_RWops, value: u16) usize;
+pub extern fn SDL_WriteLE32(dst: *SDL_RWops, value: u32) usize;
+pub extern fn SDL_WriteBE32(dst: *SDL_RWops, value: u32) usize;
+pub extern fn SDL_WriteLE64(dst: *SDL_RWops, value: u64) usize;
+pub extern fn SDL_WriteBE64(dst: *SDL_RWops, value: u64) usize;
+pub const SDL_BLENDMODE_NONE: c_int = 0;
+pub const SDL_BLENDMODE_BLEND: c_int = 1;
+pub const SDL_BLENDMODE_ADD: c_int = 2;
+pub const SDL_BLENDMODE_MOD: c_int = 4;
+pub const SDL_BLENDMODE_MUL: c_int = 8;
+pub const SDL_BLENDMODE_INVALID: c_int = 2147483647;
+pub const SDL_BlendMode = c_uint;
 pub const SDL_PIXELTYPE_UNKNOWN: c_int = 0;
 pub const SDL_PIXELTYPE_INDEX1: c_int = 1;
 pub const SDL_PIXELTYPE_INDEX4: c_int = 2;
@@ -5787,3 +5937,34 @@ pub const _SDL_Sensor = struct__SDL_Sensor;
 pub const _SDL_GameController = struct__SDL_GameController;
 pub const _SDL_Haptic = struct__SDL_Haptic;
 pub const SDL_hid_device_ = struct_SDL_hid_device_;
+=======
+
+pub const SDL_SYSWM_TYPE = enum(c_int) {
+    UNKNOWN,
+    WINDOWS,
+    X11,
+    DIRECTFB,
+    COCOA,
+    UIKIT,
+    WAYLAND,
+    MIR, // no longer available, left for API/ABI compatibility. Remove in 2.1!
+    WINRT,
+    ANDROID,
+    VIVANTE,
+    OS2,
+    HAIKU,
+};
+pub const SDL_SysWMInfo = extern struct {
+    version: SDL_version,
+    subsystem: SDL_SYSWM_TYPE,
+    u: extern union {
+        win: extern struct {
+            window: std.os.windows.HWND,
+            hdc: std.os.windows.HDC,
+            hinstance: std.os.windows.HINSTANCE,
+        },
+        // TODO: other variants
+    },
+};
+pub extern fn SDL_GetWindowWMInfo(window: *SDL_Window, info: *SDL_SysWMInfo) SDL_bool;
+pub extern fn SDL_SetMainReady() void;
