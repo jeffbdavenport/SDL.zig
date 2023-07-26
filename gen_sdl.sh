@@ -1,17 +1,21 @@
 #!/bin/bash
 
 # The input file name to the SDL2 main header
-INFILE="/home/felix/projects/SDL/include/SDL.h"
+INFILE="stubs/SDL2/SDL.h"
+INFILE2="stubs/SDL2/SDL_image.h"
 
 # The output file name of this script.
 # this should not be changed
 OUTFILE="src/binding/sdl.zig"
+OUTFILE2="src/binding/sdl_image.zig"
 
 set -e #setopt -e
-clear
+# clear
 zig translate-c \
   -target x86_64-linux-gnu \
   -I stubs \
+  -I /usr/include \
+  -I /usr/include/x86_64-linux-gnu \
   -D SDL_DISABLE_MMINTRIN_H=0 \
   -D SDL_DISABLE_XMMINTRIN_H=0 \
   -D SDL_DISABLE_EMMINTRIN_H=0 \
@@ -19,6 +23,19 @@ zig translate-c \
   -D SDL_DISABLE_IMMINTRIN_H=0 \
   -D SDL_DISABLE_MM3DNOW_H=0 \
   "${INFILE}" > "${OUTFILE}"
+
+zig translate-c \
+  -target x86_64-linux-gnu \
+  -I stubs \
+  -I /usr/include \
+  -I /usr/include/x86_64-linux-gnu \
+  -D SDL_DISABLE_MMINTRIN_H=0 \
+  -D SDL_DISABLE_XMMINTRIN_H=0 \
+  -D SDL_DISABLE_EMMINTRIN_H=0 \
+  -D SDL_DISABLE_PMMINTRIN_H=0 \
+  -D SDL_DISABLE_IMMINTRIN_H=0 \
+  -D SDL_DISABLE_MM3DNOW_H=0 \
+  "${INFILE2}" > "${OUTFILE2}"
 
 function patch_file()
 {

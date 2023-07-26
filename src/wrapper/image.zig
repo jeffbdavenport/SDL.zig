@@ -2,7 +2,12 @@ const SDL = @import("sdl.zig");
 const std = @import("std");
 
 /// Exports the C interface for SDL_image
-pub const c = @import("sdl-native");
+// pub const c = @import("sdl-native");
+
+const c = @cImport({
+    @cInclude("SDL2/SDL.h");
+    @cInclude("SDL2/SDL_image.h");
+});
 
 pub const InitFlags = packed struct {
     jpg: bool = false, // IMG_INIT_JPG = 1,
