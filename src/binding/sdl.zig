@@ -5937,7 +5937,6 @@ pub const _SDL_Sensor = struct__SDL_Sensor;
 pub const _SDL_GameController = struct__SDL_GameController;
 pub const _SDL_Haptic = struct__SDL_Haptic;
 pub const SDL_hid_device_ = struct_SDL_hid_device_;
-=======
 
 pub const SDL_SYSWM_TYPE = enum(c_int) {
     UNKNOWN,

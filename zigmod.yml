@@ -1,6 +1,6 @@
 id: r5hwws1i0u5g9xlcjjiylo1gl8ht7kdnse285jpjlzs61ms9
 name: sdl
-main: src/sdl.zig
+main: src/binding/sdl.zig
 license: MIT
 description: SDL
 dependencies:
